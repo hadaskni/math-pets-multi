@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>חיות החשבון - כפל וחילוק</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Varela+Round&display=swap');
+        body {
+            font-family: 'Varela Round', sans-serif;
+            background: linear-gradient(135deg, #fefce8 0%, #fef3c7 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            padding: 1rem;
+        }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.1);
+            border: 4px solid white;
+            min-height: 70vh;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 100%;
+            padding: 1rem;
+            transition: transform 0.1s;
+        }
+        
+        @media (min-width: 768px) {
+            .card {
+                border-radius: 2.5rem;
+                border: 8px solid white;
+                min-height: 600px;
+                padding: 2rem;
+            }
+        }
+
+        .option-btn {
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-bottom: 4px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .option-btn:active {
+            transform: translateY(4px);
+            border-bottom-width: 0;
+        }
+
+        .option-btn.selected {
+            background-color: #f59e0b; 
+            color: white;
+            border-color: #b45309; 
+            border-bottom-width: 4px;
+        }
+        
+        .coin-animation { animation: coinPop 0.5s ease-out forwards; }
+        @keyframes coinPop {
+            0% { transform: scale(0) translateY(0); opacity: 0; }
+            50% { transform: scale(1.5) translateY(-50px); opacity: 1; }
+            100% { transform: scale(1) translateY(-100px); opacity: 0; }
+        }
+
+        .item-swallow {
+            animation: itemMoveToAnimal 0.8s cubic-bezier(0.5, 0, 0.5, 1) forwards;
+        }
+
+        @keyframes itemMoveToAnimal {
+            0% { transform: translateY(-150px) scale(0.5) rotate(0deg); opacity: 0; }
+            30% { transform: translateY(-100px) scale(1.2) rotate(15deg); opacity: 1; }
+            100% { transform: translateY(120px) scale(0) rotate(-15deg); opacity: 0; }
+        }
+
+        .animal-react {
+            animation: animalBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes animalBounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15) translateY(-25px); }
+        }
+
+        .sparkle {
+            position: absolute;
+            pointer-events: none;
+            animation: sparkleFloat 1s ease-out forwards;
+        }
+
+        @keyframes sparkleFloat {
+            0% { transform: translate(0, 0) scale(0); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translate(var(--tw-x), var(--tw-y)) scale(1.5); opacity: 0; }
+        }
+
+        .ltr { direction: ltr; unicode-bidi: bidi-override; }
+
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .combo-pulse { animation: comboPulse 1.5s infinite; }
+        @keyframes comboPulse {
+            0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(251, 191, 36, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+        }
+        
+        .meter-fill { transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(4px);
+            border: 2px solid white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+            cursor: pointer;
+            position: relative;
+            z-index: 60;
+        }
+        .control-btn:hover { transform: scale(1.05); }
+        .control-btn:active { transform: scale(0.95); }
+
+        #preloader { position: absolute; width: 0; height: 0; overflow: hidden; opacity: 0; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+    <div id="preloader">
+        <img src="dog1.png"> <img src="dog2.png"> <img src="dog3.png"> <img src="dog4.png"> <img src="dog5.png">
+        <img src="cat1.png"> <img src="cat2.png"> <img src="cat3.png"> <img src="cat4.png"> <img src="cat5.png">
+        <img src="rabbit1.png"> <img src="rabbit2.png"> <img src="rabbit3.png"> <img src="rabbit4.png"> <img src="rabbit5.png">
+    </div>
+
+    <div class="max-w-xl w-full mx-auto relative">
+        <div class="fixed top-2 left-2 right-2 z-50 flex justify-between items-start pointer-events-none px-1">
+            <div class="flex flex-col gap-1 pointer-events-auto">
+                <div class="bg-white/90 backdrop-blur px-3 py-1 rounded-full border-2 border-yellow-400 shadow-lg flex items-center gap-2 w-fit transform scale-90 origin-top-left md:scale-100">
+                    <span class="text-lg">💰</span>
+                    <span id="total-wallet" class="font-black text-yellow-700 text-lg">0</span>
+                </div>
+                <div class="flex flex-col gap-1 transform scale-90 origin-top-left md:scale-100">
+                    <div class="bg-white/90 backdrop-blur px-2 py-1 rounded-xl border-2 border-red-100 shadow-md flex flex-col gap-0.5 w-24">
+                        <div class="flex justify-between items-center text-[8px] font-bold text-red-600">
+                            <span>שובע</span>
+                            <span>🍎</span>
+                        </div>
+                        <div class="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                            <div id="hunger-meter" class="meter-fill h-full bg-red-500" style="width: 10%"></div>
+                        </div>
+                        <div id="hunger-val" class="text-[8px] text-center text-red-800 font-mono leading-none">10/100</div>
+                    </div>
+                    <div class="bg-white/90 backdrop-blur px-2 py-1 rounded-xl border-2 border-pink-100 shadow-md flex flex-col gap-0.5 w-24">
+                        <div class="flex justify-between items-center text-[8px] font-bold text-pink-600">
+                            <span>שמחה</span>
+                            <span>❤️</span>
+                        </div>
+                        <div class="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                            <div id="happiness-meter" class="meter-fill h-full bg-pink-500" style="width: 10%"></div>
+                        </div>
+                        <div id="happiness-val" class="text-[8px] text-center text-pink-800 font-mono leading-none">10/100</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-1.5 pointer-events-auto">
+                <button onclick="goToShop()" class="control-btn p-2 rounded-full text-slate-600 hover:text-purple-600 hover:border-purple-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                </button>
+                <button onclick="goToSettings()" class="control-btn p-2 rounded-full text-slate-600 hover:text-blue-600 hover:border-blue-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                </button>
+                <button onclick="goToHome()" class="control-btn p-2 rounded-full text-slate-600 hover:text-emerald-600 hover:border-emerald-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div id="main-card" class="card text-center relative mt-20 md:mt-24 mx-auto">
+            
+            <div id="screen-animal" class="screen active w-full">
+                <h2 class="text-2xl md:text-3xl font-black text-slate-800 mb-6 mt-2 text-center">בחר חבר לדרך!</h2>
+                <div class="grid grid-cols-3 gap-3 md:gap-4">
+                    <button onclick="selectAnimal('dog')" class="option-btn bg-blue-50 hover:bg-blue-100 p-4 md:p-6 rounded-3xl border-2 border-blue-200 group w-full">
+                        <span class="h-20 w-20 md:h-28 md:w-28 flex items-center justify-center mb-2 drop-shadow-md transition-transform group-hover:scale-110">
+                            <span class="text-5xl md:text-7xl">🐶</span>
+                        </span>
+                        <span class="font-bold text-blue-600 text-sm md:text-base w-full text-center">כלבלב</span>
+                    </button>
+                    <button onclick="selectAnimal('cat')" class="option-btn bg-pink-50 hover:bg-pink-100 p-4 md:p-6 rounded-3xl border-2 border-pink-200 group w-full">
+                        <span class="h-20 w-20 md:h-28 md:w-28 flex items-center justify-center mb-2 drop-shadow-md transition-transform group-hover:scale-110">
+                            <span class="text-5xl md:text-7xl">🐱</span>
+                        </span>
+                        <span class="font-bold text-pink-600 text-sm md:text-base w-full text-center">חתלתול</span>
+                    </button>
+                    <button onclick="selectAnimal('rabbit')" class="option-btn bg-emerald-50 hover:bg-emerald-100 p-4 md:p-6 rounded-3xl border-2 border-emerald-200 group w-full">
+                        <span class="h-20 w-20 md:h-28 md:w-28 flex items-center justify-center mb-2 drop-shadow-md transition-transform group-hover:scale-110">
+                            <span class="text-5xl md:text-7xl">🐰</span>
+                        </span>
+                        <span class="font-bold text-emerald-600 text-sm md:text-base w-full text-center">ארנב</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="screen-lobby" class="screen w-full">
+                <h2 class="text-2xl md:text-3xl font-black text-slate-800 mb-2 mt-4 text-center">הבית של <span id="lobby-pet-name"></span></h2>
+                <div class="mb-4">
+                    <input type="text" id="pet-name-input" placeholder="תן שם לחיה..." class="border-2 border-slate-300 rounded-xl px-4 py-2 text-center w-full max-w-xs focus:border-blue-500 focus:outline-none" onchange="updatePetName(this.value)">
+                </div>
+                <div class="flex flex-col items-center justify-center min-h-[300px] md:min-h-[350px]">
+                    <div id="lobby-animal-icon" class="h-56 w-56 md:h-72 md:w-72 flex items-center justify-center text-9xl md:text-[10rem] transition-all mb-4"></div>
+                    <div id="lobby-mood-text" class="text-lg md:text-xl font-bold text-slate-500 bg-slate-100 px-4 py-1 rounded-full text-center">מצב רוח: ...</div>
+                </div>
+                <div class="grid grid-cols-1 gap-3 mt-4 w-full">
+                    <button onclick="goToSettings()" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-black py-4 rounded-2xl shadow-xl text-lg md:text-xl flex items-center justify-center gap-2">
+                        <span>✖️</span> לוח הכפל והחילוק
+                    </button>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="openShop()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-2xl shadow-md text-sm md:text-base">🛍️ לחנות</button>
+                        <button onclick="showScreen('screen-animal')" class="bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold py-3 rounded-2xl shadow-md text-sm md:text-base">🔄 החלף חיה</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="screen-factor" class="screen w-full relative">
+                <button onclick="goBack('screen-lobby')" class="absolute top-0 right-0 text-slate-400 hover:text-slate-600 p-2 text-sm font-bold">➜ חזור</button>
+                <h2 class="text-2xl md:text-3xl font-black text-slate-800 mb-2 mt-6 text-center">אילו לוחות נתרגל?</h2>
+                <p class="text-sm text-slate-500 mb-6">בחר לוחות (אפשר כמה ביחד!)</p>
+                <div id="factor-grid" class="grid grid-cols-5 gap-2 md:gap-3 mb-6 place-content-center"></div>
+                <button id="btn-continue-mode" onclick="showScreen('screen-mode')" class="w-full bg-slate-300 text-white font-black py-4 rounded-2xl shadow-lg text-lg md:text-xl transition-all" disabled>המשך לבחירת סוג ➔</button>
+            </div>
+
+            <div id="screen-mode" class="screen w-full relative">
+                <button onclick="goBack('screen-factor')" class="absolute top-0 right-0 text-slate-400 hover:text-slate-600 p-2 text-sm font-bold">➜ חזור</button>
+                <h2 class="text-2xl md:text-3xl font-black text-slate-800 mb-8 mt-8 text-center">סוג התרגילים:</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <button onclick="selectMode('multiply')" class="option-btn bg-white border-2 border-slate-200 p-6 rounded-3xl hover:bg-orange-50 font-bold text-lg md:text-xl text-orange-600">כפל (✖️)</button>
+                    <button onclick="selectMode('divide')" class="option-btn bg-white border-2 border-slate-200 p-6 rounded-3xl hover:bg-blue-50 font-bold text-lg md:text-xl text-blue-600">חילוק (➗)</button>
+                    <button onclick="selectMode('mixed')" class="option-btn bg-white border-2 border-slate-200 p-6 rounded-3xl hover:bg-purple-50 font-bold text-lg md:text-xl text-purple-600">מעורב (✖️/➗)</button>
+                    <button onclick="selectMode('missing')" class="option-btn bg-white border-2 border-slate-200 p-6 rounded-3xl hover:bg-red-50 font-bold text-lg md:text-xl text-red-600">נעלמים (□)</button>
+                </div>
+            </div>
+
+            <div id="screen-game" class="screen w-full">
+                <div class="flex flex-col items-center mb-4 md:mb-6 w-full">
+                    <div class="flex justify-between items-center w-full">
+                        <div class="flex flex-col items-center">
+                            <div class="relative">
+                                <div id="game-animal-icon" class="h-28 w-28 md:h-32 md:w-32 flex items-center justify-center text-6xl md:text-7xl"></div>
+                                <div id="combo-badge" class="absolute -top-2 -right-4 bg-orange-500 text-white text-xs font-black px-2 py-1 rounded-full shadow-md hidden animate-bounce">רצף x2!</div>
+                            </div>
+                            <div id="game-mood-text" class="text-[10px] md:text-xs font-bold text-slate-500 mt-1 text-center">מצב רוח: ...</div>
+                        </div>
+                        <div class="bg-yellow-100 px-4 py-2 rounded-full border-2 border-yellow-400 flex items-center gap-2">
+                            <span class="text-xl">💰</span>
+                            <span id="session-coins" class="font-bold text-yellow-700">0</span>
+                        </div>
+                        <div id="progress-display" class="text-slate-400 font-bold text-xs md:text-sm text-center">תרגיל 1/12</div>
+                    </div>
+                </div>
+                <div id="card" class="bg-white rounded-[2rem] p-6 md:p-10 mb-6 md:mb-8 border-4 border-dashed border-orange-200 relative overflow-visible w-full flex justify-center items-center shadow-inner">
+                    <div id="coin-emitter" class="absolute inset-0 flex items-center justify-center pointer-events-none z-50"></div>
+                    <div id="math-display" class="text-3xl sm:text-5xl md:text-6xl font-black text-slate-800 ltr whitespace-nowrap"></div>
+                </div>
+                <div id="answers-grid" class="grid grid-cols-2 gap-3 md:gap-4 ltr w-full"></div>
+            </div>
+
+            <div id="screen-summary" class="screen w-full">
+                <h2 id="summary-title" class="text-3xl md:text-4xl font-black text-slate-800 mb-4 mt-4 text-center">אלופים! 🏆</h2>
+                <p class="text-lg md:text-xl text-slate-600 mb-4 text-center">אספת בסבב זה:</p>
+                <div class="flex justify-center mb-8">
+                    <div class="inline-flex items-center gap-4 bg-yellow-50 p-4 px-8 rounded-full border-4 border-yellow-400 shadow-lg">
+                        <span class="text-3xl md:text-4xl">💰</span>
+                        <span id="final-session-coins" class="text-4xl md:text-5xl font-black text-yellow-600">0</span>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-3">
+                    <button onclick="selectMode(state.mode)" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-black py-4 rounded-2xl shadow-xl text-lg md:text-xl">המשך תרגול ↺</button>
+                    <button onclick="goToSettings()" class="w-full bg-purple-500 hover:bg-purple-600 text-white font-black py-4 rounded-2xl shadow-xl text-lg md:text-xl">בחר לוחות חדשים ⚙️</button>
+                    <button onclick="openShop()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-xl text-lg md:text-xl">לחנות 🛒</button>
+                </div>
+            </div>
+
+            <div id="screen-shop" class="screen w-full relative">
+                <button onclick="goBackFromShop()" class="absolute top-0 right-0 text-slate-400 hover:text-slate-600 p-2 text-sm font-bold">➜ חזור</button>
+                <h2 class="text-2xl md:text-3xl font-black text-slate-800 mb-4 md:mb-6 mt-8 text-center">חנות החיות 🛍️</h2>
+                <div class="flex gap-2 mb-4 md:mb-6">
+                    <button onclick="showShopTab('food')" id="tab-food" class="flex-1 py-2 rounded-xl font-bold border-2 border-blue-500 bg-blue-500 text-white transition-all text-sm">אוכל 🍎</button>
+                    <button onclick="showShopTab('toys')" id="tab-toys" class="flex-1 py-2 rounded-xl font-bold border-2 border-blue-100 text-blue-400 transition-all text-sm">שעשועים 🧸</button>
+                </div>
+                <div id="shop-items" class="grid grid-cols-2 gap-3 h-[280px] overflow-y-auto p-2 border-2 border-slate-100 rounded-2xl bg-slate-50/50"></div>
+            </div>
+
+            <div id="screen-interact" class="screen w-full overflow-hidden">
+                <div class="relative py-12 flex flex-col items-center justify-center min-h-[400px] md:min-h-[500px]">
+                    <div id="interact-item" class="text-7xl md:text-8xl absolute z-20 transition-all opacity-0" style="top: 0;"></div>
+                    <div id="interact-animal" class="h-60 w-60 md:h-80 md:w-80 flex items-center justify-center text-9xl md:text-[12rem] z-10 mt-16 transition-all relative"></div>
+                    <div id="interact-mood-text" class="text-lg font-bold text-slate-500 mt-2"></div>
+                    <div id="interact-text" class="mt-4 text-2xl md:text-3xl font-black text-indigo-600 opacity-0 transition-opacity text-center">יאמי!</div>
+                </div>
+                <button id="back-from-interact" onclick="goBackFromShop()" class="w-full bg-slate-800 text-white font-black py-4 rounded-2xl shadow-xl text-lg md:text-xl mt-4 opacity-0 pointer-events-none transition-opacity">חזרה</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const animalMoods = {
+            dog: [
+                { img: `<img src="dog1.png" class="w-full h-full object-contain mix-blend-multiply" onerror="this.outerHTML='😿'">`, label: 'עצוב ורעב' },
+                { img: `<img src="dog2.png" class="w-full h-full object-contain mix-blend-multiply" onerror="this.outerHTML='🐶'">`, label: 'רעב' },
+                { img: `<img src="dog3.png" class="w-full h-full object-contain mix-blend-multiply" onerror="this.outerHTML='🐕'">`, label: 'רגיל' },
+                { img: `<img src="dog4.png" class="w-full h-full object-contain mix-blend-multiply" onerror="this.outerHTML='🤩'">`, label: 'שמח' },
+                { img: `<img src="dog5.png" class="w-full h-full object-contain mix-blend-multiply" onerror="this.outerHTML='💖🐶'">`, label: 'גדול ומאושר!' }
+            ],
+            cat: [
+                { img: `<img src="cat1.png" class="w-full h-full object-contain mix-blend-multiply" onerror="this.outerHTML='😾'">`, label: 'עצוב ורעב' },
+                { img: `<img src="cat2.png" class="w-full h-full object-contain mix-blend-multiply" onerror="this.outerHTML='🐱'">`, label: 'רעב' },
+                { img: `<img src="cat3.png" class="w-full h-full object-contain mix-blend-multiply" onerror="this.outerHTML='🐈'">`, label: 'רגיל' },
+                { img: `<img src="cat4.png" class="w-full h-full object-contain mix-blend-multiply" onerror="this.outerHTML='😻'">`, label: 'שמח' },
+                { img: `<img src="cat5.png" class="w-full h-full object-contain mix-blend-multiply" onerror="this.outerHTML='💖🐱'">`, label: 'גדול ומאושר!' }
+            ],
+            rabbit: [
+                { img: `<img src="rabbit1.png" class="w-full h-full object-contain mix-blend-multiply" onerror="this.outerHTML='🐰💧'">`, label: 'עצוב ורעב' },
+                { img: `<img src="rabbit2.png" class="w-full h-full object-contain mix-blend-multiply" onerror="this.outerHTML='🐰'">`, label: 'רעב' },
+                { img: `<img src="rabbit3.png" class="w-full h-full object-contain mix-blend-multiply" onerror="this.outerHTML='🐇'">`, label: 'רגיל' },
+                { img: `<img src="rabbit4.png" class="w-full h-full object-contain mix-blend-multiply" onerror="this.outerHTML='💖'">`, label: 'שמח' },
+                { img: `<img src="rabbit5.png" class="w-full h-full object-contain mix-blend-multiply" onerror="this.outerHTML='👑🐰'">`, label: 'גדול ומאושר!' }
+            ]
+        };
+
+        const STORAGE_KEY = 'mathPetsMultiState';
+
+        let state = {
+            totalWallet: 0,
+            sessionScore: 0,
+            animalType: 'dog',
+            petName: '', 
+            selectedFactors: [],
+            mode: '',
+            currentQ: 0,
+            ans: 0,
+            hasMistakeInCurrentQ: false,
+            hunger: 10,
+            happiness: 10,
+            questionPool: [],
+            currentScreen: 'screen-animal',
+            combo: 0,
+            lastScreen: null
+        };
+
+        const shopData = {
+            food: [
+                { icon: '🍎', name: 'תפוח', price: 10 },
+                { icon: '🥕', name: 'גזר', price: 15 },
+                { icon: '🍗', name: 'עוף', price: 30 },
+                { icon: '🍦', name: 'גלידה', price: 25 },
+                { icon: '🍕', name: 'פיצה', price: 50 },
+                { icon: '🍩', name: 'דונאט', price: 20 }
+            ],
+            toys: [
+                { icon: '⚽', name: 'כדור', price: 20 },
+                { icon: '🎈', name: 'בלון', price: 10 },
+                { icon: '🛹', name: 'סקייטבורד', price: 50 },
+                { icon: '👓', name: 'משקפיים', price: 25 },
+                { icon: '👑', name: 'כתר', price: 40 },
+                { icon: '🎮', name: 'משחק', price: 45 }
+            ]
+        };
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playTone(freq, type, duration, delay = 0, vol = 0.1) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.value = freq;
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(audioCtx.currentTime + delay);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime + delay);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + duration);
+            osc.stop(audioCtx.currentTime + delay + duration);
+        }
+
+        function playSuccessSound() { playTone(523.25, 'sine', 0.1, 0, 0.2); playTone(659.25, 'sine', 0.3, 0.1, 0.2); }
+        function playComboSound() { playTone(523.25, 'triangle', 0.2, 0, 0.2); playTone(659.25, 'triangle', 0.2, 0.1, 0.2); playTone(783.99, 'triangle', 0.3, 0.2, 0.2); }
+        function playErrorSound() { playTone(150, 'triangle', 0.2, 0, 0.15); }
+        function playBuySound() { playTone(400, 'sine', 0.1, 0, 0.1); playTone(600, 'sine', 0.2, 0.1, 0.1); }
+
+        function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+        function loadData() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                state = { ...state, ...JSON.parse(saved) };
+                updateWalletDisplay();
+                updateAnimalVisuals();
+                updatePetNameDisplay();
+                if (state.currentScreen) showScreen(state.currentScreen, false);
+            }
+        }
+
+        function showScreen(id, save = true) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            state.currentScreen = id;
+            if (id === 'screen-factor') renderFactorButtons();
+            if (save) saveData();
+        }
+
+        function goBack(id) { showScreen(id); }
+        function goToHome() { state.animalType ? showScreen('screen-lobby') : showScreen('screen-animal'); }
+        function goToSettings() { showScreen('screen-factor'); }
+        function goToShop() { openShop(); }
+        function openShop() { state.lastScreen = state.currentScreen; showShopTab('food'); showScreen('screen-shop'); }
+        function goBackFromShop() { state.lastScreen ? showScreen(state.lastScreen) : showScreen('screen-lobby'); }
+
+        function updatePetName(name) { state.petName = name; updatePetNameDisplay(); saveData(); }
+        function updatePetNameDisplay() { const el = document.getElementById('lobby-pet-name'); if (el) el.innerText = state.petName || 'החיה שלי'; }
+
+        function updateWalletDisplay() {
+            document.getElementById('total-wallet').innerText = state.totalWallet;
+            document.getElementById('hunger-meter').style.width = state.hunger + '%';
+            document.getElementById('happiness-meter').style.width = state.happiness + '%';
+            document.getElementById('hunger-val').innerText = Math.round(state.hunger) + '/100';
+            document.getElementById('happiness-val').innerText = Math.round(state.happiness) + '/100';
+            updateAnimalVisuals();
+        }
+
+        function updateAnimalVisuals() {
+            const avg = (state.hunger + state.happiness) / 2;
+            let idx = 0;
+            if (avg < 25) idx = 0; else if (avg < 45) idx = 1; else if (avg < 65) idx = 2; else if (avg < 85) idx = 3; else idx = 4;
+            const mood = animalMoods[state.animalType][idx];
+            ['game-animal-icon', 'interact-animal', 'lobby-animal-icon'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = mood.img;
+            });
+            const labels = ['game-mood-text', 'interact-mood-text', 'lobby-mood-text'];
+            labels.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = 'מצב רוח: ' + mood.label;
+            });
+        }
+
+        function selectAnimal(t) { state.animalType = t; updateAnimalVisuals(); showScreen('screen-lobby'); }
+
+        function renderFactorButtons() {
+            const grid = document.getElementById('factor-grid');
+            grid.innerHTML = '';
+            for (let i = 1; i <= 10; i++) {
+                const b = document.createElement('button');
+                const isSelected = state.selectedFactors.includes(i);
+                b.className = `option-btn border-2 p-3 md:p-4 rounded-2xl font-black text-xl ${isSelected ? 'selected' : 'bg-white text-slate-700'}`;
+                b.innerText = i;
+                b.onclick = () => {
+                    const idx = state.selectedFactors.indexOf(i);
+                    idx > -1 ? state.selectedFactors.splice(idx, 1) : state.selectedFactors.push(i);
+                    renderFactorButtons();
+                    updateContinueButton();
+                };
+                grid.appendChild(b);
+            }
+            updateContinueButton();
+        }
+
+        function updateContinueButton() {
+            const btn = document.getElementById('btn-continue-mode');
+            btn.disabled = state.selectedFactors.length === 0;
+            btn.className = `w-full font-black py-4 rounded-2xl shadow-lg text-xl transition-all ${btn.disabled ? 'bg-slate-300 text-white' : 'bg-orange-600 text-white hover:bg-orange-700'}`;
+        }
+
+        function selectMode(m) {
+            state.mode = m; state.sessionScore = 0; state.currentQ = 0; state.combo = 0;
+            document.getElementById('session-coins').innerText = 0;
+            prepareQuestionPool();
+            showScreen('screen-game');
+            nextQuestion();
+        }
+
+        function prepareQuestionPool() {
+            state.questionPool = [];
+            const roundSize = 12;
+            let valid = [];
+            state.selectedFactors.forEach(f => {
+                for (let i = 1; i <= 10; i++) {
+                    if (state.mode === 'multiply' || state.mode === 'mixed' || state.mode === 'missing') {
+                        valid.push({ type: 'multiply', n1: f, n2: i, ans: f * i, factorCtx: f });
+                    }
+                    if (state.mode === 'divide' || state.mode === 'mixed' || state.mode === 'missing') {
+                        valid.push({ type: 'divide', n1: f * i, n2: f, ans: i, factorCtx: f });
+                    }
+                }
+            });
+            valid.sort(() => Math.random() - 0.5);
+            for (let i = 0; i < roundSize; i++) {
+                const q = valid[i % valid.length];
+                state.questionPool.push({ ...q, missing: (state.mode === 'missing') });
+            }
+            saveData();
+        }
+
+        function nextQuestion() {
+            state.currentQ++; state.hasMistakeInCurrentQ = false;
+            if (state.currentQ > state.questionPool.length) {
+                state.totalWallet += state.sessionScore;
+                updateWalletDisplay();
+                document.getElementById('final-session-coins').innerText = state.sessionScore;
+                showScreen('screen-summary');
+                return;
+            }
+            document.getElementById('progress-display').innerText = `תרגיל ${state.currentQ}/${state.questionPool.length}`;
+            const q = state.questionPool[state.currentQ-1];
+            const disp = document.getElementById('math-display');
+            state.ans = q.ans;
+            
+            if (q.type === 'multiply') {
+                if (q.missing) {
+                    if (Math.random() > 0.5) { disp.innerText = `□ × ${q.n2} = ${q.ans}`; state.ans = q.n1; }
+                    else { disp.innerText = `${q.n1} × □ = ${q.ans}`; state.ans = q.n2; }
+                } else disp.innerText = `${q.n1} × ${q.n2} = ?`;
+            } else {
+                if (q.missing) {
+                    if (Math.random() > 0.5) { disp.innerText = `□ ÷ ${q.n2} = ${q.ans}`; state.ans = q.n1; }
+                    else { disp.innerText = `${q.n1} ÷ □ = ${q.ans}`; state.ans = q.n2; }
+                } else disp.innerText = `${q.n1} ÷ ${q.n2} = ?`;
+            }
+            renderAnswers();
+            document.getElementById('combo-badge').classList.toggle('hidden', state.combo < 3);
+            document.getElementById('main-card').classList.toggle('combo-pulse', state.combo >= 3);
+        }
+
+        function renderAnswers() {
+            const grid = document.getElementById('answers-grid');
+            grid.innerHTML = '';
+            const q = state.questionPool[state.currentQ-1];
+            const opts = new Set([state.ans]);
+            
+            // לוגיקת מסיחים חכמה:
+            if (q.missing) {
+                // בתרגילי נעלם, המסיחים הם מספרים קרובים לתוצאה (למשל 4, 5, 6)
+                opts.add(state.ans + 1);
+                opts.add(state.ans - 1);
+                opts.add(state.ans + 2);
+            } else {
+                if (q.type === 'multiply') {
+                    // בכפל, מוסיפים תוצאות של כפולות שכנות בלוח
+                    opts.add(q.n1 * (q.n2 + 1));
+                    opts.add(q.n1 * (q.n2 - 1));
+                    opts.add((q.n1 + 1) * q.n2);
+                    opts.add((q.n1 - 1) * q.n2);
+                    // טעות נפוצה: חיבור במקום כפל
+                    opts.add(q.n1 + q.n2);
+                } else {
+                    // בחילוק, מספרים קרובים
+                    opts.add(state.ans + 1);
+                    opts.add(state.ans - 1);
+                    opts.add(state.ans + 2);
+                }
+            }
+
+            // הוספת מסיחים מספריים קרובים בכל מקרה
+            opts.add(state.ans + 1);
+            opts.add(state.ans - 1);
+            if (state.ans > 10) {
+                opts.add(state.ans + 10);
+                opts.add(state.ans - 10);
+            }
+
+            // סינון תוצאות לא תקינות והבטחה שיש 4 אפשרויות
+            let finalDistractors = Array.from(opts).filter(v => v >= 0 && v !== state.ans && v <= 110);
+            finalDistractors.sort(() => Math.random() - 0.5);
+            
+            const displayList = [state.ans];
+            for (let d of finalDistractors) {
+                if (displayList.length < 4) displayList.push(d);
+            }
+
+            // גיבוי למקרה שאין מספיק (במספרים קטנים מאוד)
+            while(displayList.length < 4) {
+                let w = state.ans + (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random()*10)+1);
+                if (w >= 0 && !displayList.includes(w)) displayList.push(w);
+            }
+
+            displayList.sort(() => Math.random() - 0.5).forEach(o => {
+                const b = document.createElement('button');
+                b.className = "option-btn bg-white border-2 border-slate-200 text-4xl font-black py-6 rounded-3xl text-slate-700 shadow-sm";
+                b.innerText = o;
+                b.onclick = () => {
+                    if (o === state.ans) {
+                        if (!state.hasMistakeInCurrentQ) {
+                            state.combo++;
+                            state.sessionScore += (state.combo >= 3 ? 2 : 1);
+                            document.getElementById('session-coins').innerText = state.sessionScore;
+                            document.getElementById('coin-emitter').innerHTML = `<span class="text-6xl coin-animation">💰</span>`;
+                            state.combo >= 3 ? playComboSound() : playSuccessSound();
+                        } else playSuccessSound();
+                        b.className = "option-btn bg-emerald-500 text-white text-4xl font-black py-6 rounded-3xl shadow-lg";
+                        setTimeout(() => { document.getElementById('coin-emitter').innerHTML = ''; nextQuestion(); }, 700);
+                    } else {
+                        state.combo = 0; state.hasMistakeInCurrentQ = true;
+                        playErrorSound();
+                        b.className = "option-btn bg-red-100 text-red-500 text-4xl font-black py-6 rounded-3xl opacity-50";
+                        document.getElementById('main-card').classList.add('shake');
+                        setTimeout(() => document.getElementById('main-card').classList.remove('shake'), 500);
+                    }
+                };
+                grid.appendChild(b);
+            });
+        }
+
+        function showShopTab(t) {
+            document.getElementById('tab-food').className = t === 'food' ? "flex-1 py-2 rounded-xl font-bold border-2 border-blue-500 bg-blue-500 text-white" : "flex-1 py-2 rounded-xl font-bold border-2 border-blue-100 text-blue-400";
+            document.getElementById('tab-toys').className = t === 'toys' ? "flex-1 py-2 rounded-xl font-bold border-2 border-blue-500 bg-blue-500 text-white" : "flex-1 py-2 rounded-xl font-bold border-2 border-blue-100 text-blue-400";
+            const grid = document.getElementById('shop-items');
+            grid.innerHTML = '';
+            shopData[t].forEach(item => {
+                const aff = state.totalWallet >= item.price;
+                const d = document.createElement('div');
+                d.className = `p-4 rounded-2xl border-2 flex flex-col items-center gap-1 transition-all ${aff ? 'bg-white border-slate-100 cursor-pointer shadow-sm hover:border-yellow-400' : 'bg-slate-100 opacity-60'}`;
+                d.onclick = aff ? () => buyItem(item, t) : null;
+                d.innerHTML = `<span class="text-4xl">${item.icon}</span><span class="font-bold text-sm text-slate-800">${item.name}</span><span class="text-xs font-black text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded-full">💰 ${item.price}</span>`;
+                grid.appendChild(d);
+            });
+        }
+
+        function buyItem(item, cat) {
+            playBuySound();
+            state.totalWallet -= item.price;
+            let boost = 25;
+            cat === 'food' ? state.hunger = Math.min(100, state.hunger + boost) : state.happiness = Math.min(100, state.happiness + boost);
+            saveData();
+            
+            const itemEl = document.getElementById('interact-item');
+            const animalEl = document.getElementById('interact-animal');
+            const textEl = document.getElementById('interact-text');
+            const backBtn = document.getElementById('back-from-interact');
+
+            itemEl.innerText = item.icon;
+            itemEl.classList.remove('item-swallow');
+            animalEl.classList.remove('animal-react');
+            textEl.classList.add('opacity-0');
+            backBtn.classList.add('opacity-0', 'pointer-events-none');
+            itemEl.style.opacity = "1";
+
+            updateAnimalVisuals(); 
+            showScreen('screen-interact');
+
+            setTimeout(() => {
+                itemEl.classList.add('item-swallow');
+                setTimeout(() => {
+                    const maxMood = animalMoods[state.animalType][4];
+                    animalEl.innerHTML = maxMood.img;
+                    animalEl.classList.add('animal-react');
+                    textEl.innerText = cat === 'food' ? "יאמי! איזה טעים!" : "איזה כיף! תודה!";
+                    textEl.classList.remove('opacity-0');
+                    backBtn.classList.remove('opacity-0', 'pointer-events-none');
+                    
+                    for(let i=0; i<12; i++) {
+                        const s = document.createElement('span');
+                        s.innerText = cat === 'food' ? '❤️' : '✨';
+                        s.className = 'sparkle text-3xl';
+                        s.style.setProperty('--tw-x', (Math.random()*400-200)+'px');
+                        s.style.setProperty('--tw-y', (Math.random()*(-350))+'px');
+                        animalEl.appendChild(s);
+                        setTimeout(() => s.remove(), 1000);
+                    }
+                    setTimeout(() => updateWalletDisplay(), 1800);
+                }, 500);
+            }, 150);
+        }
+
+        function confirmReset() { localStorage.removeItem(STORAGE_KEY); location.reload(); }
+        function closeResetModal() { document.getElementById('reset-modal').classList.add('hidden'); }
+
+        window.onload = loadData;
+    </script>
+</body>
+</html>
