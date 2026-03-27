@@ -365,6 +365,7 @@
             questionPool: [],
             currentScreen: 'screen-animal',
             combo: 0,
+            lastUpdate: Date.now(),
             lastScreen: null
         };
 
@@ -407,11 +408,24 @@
         function playErrorSound() { playTone(150, 'triangle', 0.2, 0, 0.15); }
         function playBuySound() { playTone(400, 'sine', 0.1, 0, 0.1); playTone(600, 'sine', 0.2, 0.1, 0.1); }
 
-        function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+        function saveData() { 
+            state.lastUpdate = Date.now(); // עדכון זמן השמירה האחרון
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
         function loadData() {
             const saved = localStorage.getItem(STORAGE_KEY);
             if (saved) {
                 state = { ...state, ...JSON.parse(saved) };
+                // חישוב ירידת מדדים בזמן שהאפליקציה הייתה סגורה
+                const now = Date.now();
+                const diffMs = now - (state.lastUpdate || now);
+                const fiveMinUnits = Math.floor(diffMs / (5 * 60 * 1000)); // נקודה על כל 5 דקות
+
+                if (fiveMinUnits > 0) {
+                    state.hunger = Math.max(0, state.hunger - fiveMinUnits);
+                    state.happiness = Math.max(0, state.happiness - fiveMinUnits);
+                    state.lastUpdate = now;
+                    saveData();
+                }
                 updateWalletDisplay();
                 updateAnimalVisuals();
                 updatePetNameDisplay();
@@ -693,6 +707,17 @@
         function closeResetModal() { document.getElementById('reset-modal').classList.add('hidden'); }
 
         window.onload = loadData;
+
+        // טיימר שמוריד נקודה בכל דקה של משחק פעיל
+setInterval(() => {
+    state.hunger = Math.max(0, state.hunger - 1);
+    state.happiness = Math.max(0, state.happiness - 1);
+    state.lastUpdate = Date.now();
+    
+    updateWalletDisplay(); // עדכון התצוגה של המדים והפרצוף
+    saveData();
+}, 60000); // 60000 מילי-שניות = דקה אחת
+
     </script>
 </body>
 </html>
